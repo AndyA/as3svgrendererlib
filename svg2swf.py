@@ -32,7 +32,18 @@
 #    (Raph Levien <raph@acm.org>, http://www.levien.com) 
 #
 """This is a converter from SVG into Macromedia Flash (swf) format"""
+"""
+Synopsis
+DocumentHandler handles the traversal of the XML structure, and delegates control to SWF writer.
+Contains a big switch statement
 
+SWFWriter: creates an AST based on the XML, complete with environment. 
+When a command is reached it is executed using the primitives of Swf2SvgShape
+
+Swf2SvgShape = primitives to draw in an swf
+
+
+"""
 from xml.sax import saxexts, saxlib, saxutils
 import sys, urllib, string, ming, os.path, re, math, copy
 
@@ -66,8 +77,10 @@ def printout(name, stuff):
     return
 
 def parsepaint(paint):
+# handled by builtin
     if (csscolors.has_key(paint)):
         colornum = int(csscolors[paint])
+		# DUNNO
     elif (paint[0:3] == "rgb"):
         p = re.compile(r'rgb\s*\(\s*(\d{1,3})\s*,\s*(\d{1,3})\s*,\s*(\d{1,3})\s*\)')
         m = p.match(paint)
@@ -82,7 +95,7 @@ def parsepaint(paint):
             colornum = string.atoi(m.group(1),16)
         else:
             return paint
-
+#convert to 3 valued rgb. ick.
     return (colornum / 0x10000, (colornum / 0x100) % 0x100, colornum % 0x100);
 
 
@@ -98,6 +111,7 @@ class SvgTextObject:
         self.data=""
         return
 
+		#sets the self.swftext property based on stylemap
     def setstyle(self, stylemap):
 
         # set text color
@@ -152,11 +166,12 @@ class SvgTextObject:
 
         return
     
-
+# input functioN?
     def handledata(self, data):
         self.data=self.data+data
         return
 
+		# AST node type
 class SvgGObject:
     def __init__(self):
         self.data=""
@@ -166,6 +181,7 @@ class SvgGObject:
         self.data=self.data+data
         return
 
+		# AST node type
 class SvgAObject:
     def __init__(self):
         self.data=""
@@ -175,6 +191,11 @@ class SvgAObject:
         self.data=self.data+data
         return
 
+		#accepts a self and returns a swfshape
+		# self.this is a SWFShape object
+		#self.cp {x,y} = the current pen point
+		# self.orig{x,y} = origin
+		
 class Svg2SwfShape(ming.SWFShape):
 
     def __init__(self):
@@ -187,30 +208,36 @@ class Svg2SwfShape(ming.SWFShape):
     def __del__(self):
         self.__del__
 
+		#instruction to the swfshape. Moves the pen to a specified point
     def movePenTo(self,x,y):
         printout("SWFShape", "movePenTo(%d, %d)" % (x,y))
         self.this.movePenTo(x,y)
         self.cpx = x
         self.cpy = y
 
+		#instruction to the swfshape. Moves the pen by offset
     def movePen(self,x,y):
         printout("SWFShape", "movePen(%d, %d)" % (x,y))
         self.this.movePen(x,y)
         self.cpx = self.cpx + x
         self.cpy = self.cpy + y
 
+		#instruction to the swfshape. Draws from current position to new (global) position
     def drawLineTo(self,x,y):
         printout("SWFShape", "drawLineTo(%d, %d) from (%d,%d)" % (x,y,self.cpx,self.cpy))
         self.this.drawLineTo(x,y)
         self.cpx = x
         self.cpy = y
         
+		#instruction to the swfshape. Draws from current position to offset
     def drawLine(self,x,y):
         printout("SWFShape", "drawLine(%d, %d) from (%d,%d)" % (x,y,self.cpx,self.cpy))
         self.this.drawLine(x,y)
         self.cpx = self.cpx + x
         self.cpy = self.cpy + y
         
+		#instruction to the swfshape. Draws to new global position
+		# not sure of the intricacies of this
     def drawCurveTo(self, bx, by, cx, cy, dx=None, dy=None):
         #self.this.drawLineTo(cx,cy)
         cpx = self.cpx
@@ -235,7 +262,7 @@ class Svg2SwfShape(ming.SWFShape):
             self.cpx = dx
             self.cpy = dy
 
-
+#instruction to the swfshape. Draws to new offset position
     def drawCurve(self, bx, by, cx, cy, dx=None, dy=None):
         cpx=self.cpx
         cpy=self.cpy
@@ -245,6 +272,7 @@ class Svg2SwfShape(ming.SWFShape):
             printout("SWFShape", "drawCurve(%d, %d, %d, %d, %d, %d) from (%d,%d)" % (bx,by,cx,cy,dx,dy,cpx,cpy))
             self.drawCurveTo(cpx+bx,cpy+by,cpx+cx,cpy+cy,cpx+dx,cpy+dy)
 
+			#instruction to the swfshape. Draws circle around current pen position of radius r
     def drawCircle(self, r):
         #  This needs to be replaced by a fixed version of drawCircle in ming
         x = self.cpx
@@ -269,6 +297,8 @@ class Svg2SwfShape(ming.SWFShape):
 
     #  pulled from librsvg/rsvg-path.c (Raph Levien <raph@acm.org>, http://www.levien.com)
 
+	#instruction to the swfshape. 
+	# not sure what this does
     def path_arc_segment (self, xc, yc, th0, th1, rx, ry, x_axis_rotation):
         # local variables
         # sin_th, cos_th
@@ -310,7 +340,8 @@ class Svg2SwfShape(ming.SWFShape):
     # @x: New x coordinate.
     # @y: New y coordinate.
 
-
+#instruction to the swfshape
+# not sure what this does
     def path_arc (self, rx, ry, x_axis_rotation, large_arc_flag, sweep_flag, x, y):
         # local variables
         # sin_th, cos_th
@@ -373,6 +404,8 @@ class Svg2SwfShape(ming.SWFShape):
         self.cpx = x
         self.cpy = y
 
+		#instruction to the swfshape
+		# this modifies the current pen
     def setfillandstroke(self, stylemap):
         if(stylemap.has_key('fill')):
             fill_color = parsepaint(stylemap['fill'])
@@ -405,10 +438,14 @@ class Svg2SwfShape(ming.SWFShape):
 
         return
     
+	#instruction to the swfshape
+	# resets the origin to be the current pen position. e.g. creates a new coordinate system, as with a nested sprite
     def resetorig(self):
         self.origx = self.cpx
         self.origy = self.cpy
 
+		#instruction to the swfshape
+		# closes a shape by drawing a line to the origin
     def closepath(self,stylemap,returntosender):
         cpx=self.cpx
         cpy=self.cpy
@@ -423,6 +460,7 @@ class Svg2SwfShape(ming.SWFShape):
             self.movePenTo(cpx,cpy)
         return
 
+		# main routine. accepts a self and the filename for eventual writing
 class SwfWriter(ming.SWFMovie):
     def __init__(self, filename):
         ming.Ming_setScale(1.0)
@@ -439,6 +477,7 @@ class SwfWriter(ming.SWFMovie):
     def __del__(self):
         self.__del__
 
+		# builds the style environment (stack).  Parses the string style
     def getstyle(self, style=None):
         # parse the CSS style string
         if(len(self.stylestack) == 0):
@@ -462,7 +501,7 @@ class SwfWriter(ming.SWFMovie):
         printout("style", "stylemap: " + `stylemap`);
         return stylemap
 
-    
+    # attrs is the attributes of the <svg> tag
     def handle_svg_start(self, attrs):
         if(attrs.has_key('height') and attrs.has_key('width')):
             self.setDimension(float(attrs['height']), float(attrs['width']))
@@ -478,10 +517,15 @@ class SwfWriter(ming.SWFMovie):
             self.explicitwidth=None
             #XXX: need to actually compute bounding box rather than just
             #     setting to arbitrary value here...this value works with tiger.svg
+			# charles: this shouldn't present a problem
             self.setDimension(524, 517)
 
         self.setRate(12.0)
 
+		# tag <a> and its attributes attrs
+		# what happens when you click on the button. It's like an  image map.
+		# self.chstack contains the current link
+		#there isn't much purpose to SvgAObject,
     def handle_a_start(self, attrs):
         self.chstack[:0] = [self.contenthandler]
         self.contenthandler = SvgAObject()
@@ -494,6 +538,7 @@ class SwfWriter(ming.SWFMovie):
             self.href.addAction(hrefaction, ming.SWFBUTTON_MOUSEUP)
         return
     
+	
     def handle_a_end(self):
         printout("a", "a end")
         self.href = None
@@ -502,6 +547,10 @@ class SwfWriter(ming.SWFMovie):
         self.chstack[0:1]=[]
         return
     
+	# handles the <g> tag. 
+	# G is an affine transform -- like a Sprite
+	# also goes onto the stack.
+	# there's no good reason that these are the same stack, really...
     def handle_g_start(self, attrs):
         # push self.contenthandler onto chstack
         self.chstack[:0] = [self.contenthandler]
@@ -518,6 +567,7 @@ class SwfWriter(ming.SWFMovie):
         self.stylestack[:0] = [stylemap.copy()]
         printout("g", "--  after: " + `self.stylestack`)
 
+		# pop the affine transform off the stack
     def handle_g_end(self):
         g=self.contenthandler
         printout("g", "Handling g end")
@@ -529,6 +579,7 @@ class SwfWriter(ming.SWFMovie):
         self.contenthandler = self.chstack[0]
         self.chstack[0:1]=[]
 
+		# not really sure. it's a text field but it's on the stack
     def handle_text_start(self, attrs):
         # set up the data gathering process for handle_text_end to use
         # push self.contenthandler onto chstack
@@ -547,6 +598,8 @@ class SwfWriter(ming.SWFMovie):
 
         txt.setstyle(txt.stylemap)
 
+		# prints out the text. Not sure why this couldn't be done before.
+		# maybe because of z-order.
     def handle_text_end(self):
         printout ("text", self.contenthandler.data)
         txt=self.contenthandler
@@ -577,6 +630,8 @@ class SwfWriter(ming.SWFMovie):
         else:
             self.contenthandler = []
 
+			# draws a line from <line> tag
+			# leaf node
     def handle_line(self, attrs):
         # Handle the <line> tag
 
@@ -603,6 +658,8 @@ class SwfWriter(ming.SWFMovie):
 
         i = self.add(s)
 
+		# draws a circle from <circle> tag
+		# leaf node
     def handle_circle(self, attrs):
         # Handle the <circle> tag
 
@@ -629,7 +686,8 @@ class SwfWriter(ming.SWFMovie):
         i = self.add(s)
         i.moveTo(cx,cy)
 
-
+    # draws a rectangle from <rect> tag
+	# leaf node
     def handle_rect(self, attrs):
         # Handle the <rect> tag
         printout("rect", "Starting handle_rect")
@@ -719,6 +777,9 @@ class SwfWriter(ming.SWFMovie):
         i.moveTo(x,y)
         printout("rect", "Finishing handle_rect")
 
+		# draws a path from <path> tag
+		# leaf node
+		# I really need to copy the d attribute handling code!!!
     def handle_path(self, attrs):
         # Handle the <path> tag
         if(attrs.has_key('style')):
@@ -972,6 +1033,9 @@ class SwfWriter(ming.SWFMovie):
         #i.moveTo(200,150)
         return
 
+		# draws polygon and polyline from <polygon> and <polyline> tags
+		# just draws a bunch of line segments
+		# leaf node
     def handle_polywhatever(self, attrs, tagname):
         # Handle the <polygon> and <polyline> tags
 
@@ -1023,14 +1087,19 @@ class SwfWriter(ming.SWFMovie):
 
         i = self.add(s)
 
+		# draw a polyline from <polyline> tag
+		# leaf node
     def handle_polyline(self, attrs):
         # Handle the <polygon> tag
         self.handle_polywhatever(attrs, "polyline")
 
+		# draw a polygon from <polygon> tag
+		# leaf node
     def handle_polygon(self, attrs):
         # Handle the <polygon> tag
         self.handle_polywhatever(attrs, "polygon")
 
+		# saves to file
     def finish(self):
         self.nextFrame()
         self.save("%s.swf" % self.filename)
@@ -1111,7 +1180,7 @@ class DocumentHandler(saxlib.DocumentHandler):
         self.level = self.level - 1
         printout("parser", "endElement: finishing " + name)
 
-
+# where is this used??? 
     def characters(self, all_data, start, length):
         "Handle a character data event."
         # all_data contains the whole file;
@@ -1223,12 +1292,4 @@ if __name__ == '__main__':
         sys.stderr.write("%s; processing aborted\n"
                          % (saxlib.SAXParseException))
         sys.exit(1)
-
-
-
-
-
-
-
-
-
+		
