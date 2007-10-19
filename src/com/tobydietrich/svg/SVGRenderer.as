@@ -3,11 +3,8 @@
  */
 package com.tobydietrich.svg
 {
-	import flash.display.Sprite;
-	
-	import flash.geom.Matrix;
-	import flash.geom.Point;
-	import flash.geom.Rectangle;
+	import flash.display.*;
+	import flash.geom.*;
 	
 	public class SVGRenderer extends Sprite
 	{
@@ -63,28 +60,27 @@ package com.tobydietrich.svg
 			}
 		}
 		private function visitSvg(elt:XML):Sprite {
-			var s:Sprite = new Sprite();
-			// don't want to draw the viewBox
-			//s.graphics.beginFill(0xFFFFFF);
-			//s.graphics.drawRect(0,0,elt.@width,elt.@height);
-			//s.graphics.endFill();
-			// TODO: move the child sprite to the upper left corner
+			// the view box
+			var viewBox:Sprite = new Sprite();
+			viewBox.name = "viewBox";
+			viewBox.graphics.drawRect(0,0,elt.@viewBoxWidth,elt.@viewBoxHeight);
+			
+			var activeArea:Sprite = new Sprite();
+			activeArea.name = "activeArea";
+			viewBox.addChild(activeArea);
+		
+			
+			// iterate through the children of the svg node
 			for each(var childElt:XML in elt.*) {
-				s.addChild(visit(childElt));
+				activeArea.addChild(visit(childElt));
 			}
 			
-			// normalize to a certain size (100x100)
-			var r:Rectangle = s.transform.pixelBounds;
-			for(var i:int = 0; i < s.numChildren; i++) {
-				//s.getChildAt(i).x -= r.left;
-				//s.getChildAt(i).y -= r.top;
-			}
-			s.scaleX = 200/r.width;
-			s.scaleY = 200/r.height;
-			return s;
+			return viewBox;
 		}
+		
 		private function visitRect(elt:XML):Sprite {
 			var s:Sprite = new Sprite();
+			s.name = "rectangle";
 			s.x = elt.@x;
 			s.y = elt.@y;
 			var fill:uint = getColor(elt.@fill);
@@ -101,14 +97,17 @@ package com.tobydietrich.svg
 		}
 		private function visitPath(elt:XML):Sprite {
          	var s:Sprite = new Sprite();
+         	s.name = "path";
          	s.graphics.beginFill(getColor(elt.@fill));
          	s.graphics.lineStyle(elt.@strokeWidth, getColor(elt.@stroke));
-         	notImplemented("path");
+         	var p:PathRenderer = new PathRenderer(s,elt);
          	s.graphics.endFill();
 			return s;
 		}
 		private function visitPolywhatever(elt:XML, isPolygon:Boolean):Sprite {
             var s:Sprite = new Sprite();
+            s.name = isPolygon ? "polygon" : "polyline";
+           
             s.x = elt.startPoint.@x;
             s.y = elt.startPoint.@y;
             s.graphics.lineStyle(elt.@strokeWidth, getColor(elt.@stroke));
@@ -132,6 +131,7 @@ package com.tobydietrich.svg
 		}
 		private function visitLine(elt:XML):Sprite {
 			var s:Sprite = new Sprite();
+			s.name = "line";
 			s.x = elt.@x1;
 			s.y = elt.@y1;
 			s.graphics.lineStyle(elt.@strokeWidth, getColor(elt.@stroke));
@@ -140,26 +140,29 @@ package com.tobydietrich.svg
 		}
 		private function visitCircle(elt:XML):Sprite {
 			var s:Sprite = new Sprite();
+			s.name = "circle";
 			s.x = elt.@cx;
 			s.y = elt.@cy;
 			s.graphics.lineStyle(elt.@strokeWidth, getColor(elt.@stroke));
 			s.graphics.beginFill(getColor(elt.@fill));
-			s.graphics.drawCircle(0, 0, elt.@r);
+			s.graphics.drawCircle(-elt.@r/2, -elt.@r/2, elt.@r);
 			s.graphics.endFill();
 			return s;
 		}
 		private function visitEllipse(elt:XML):Sprite {
 			var s:Sprite = new Sprite();
+			s.name = "ellipse";
 			s.x = elt.@cx;
 			s.y = elt.@cy;
 			s.graphics.lineStyle(elt.@strokeWidth, getColor(elt.@stroke));
 			s.graphics.beginFill(getColor(elt.@fill));
-			s.graphics.drawEllipse(0, 0, elt.@rx, elt.@ry);
+			s.graphics.drawEllipse(-elt.@rx/2, -elt.@ry/2, elt.@rx, elt.@ry);
 			s.graphics.endFill();
 			return s;
 		}
 		private function visitG(elt:XML):Sprite {
 			var s:Sprite = new Sprite();
+			s.name = "g";
 			s.transform.matrix = new Matrix(elt.@a, elt.@b, elt.@c, elt.@d, elt.@tx, elt.@ty);
 			for each(var childElt:XML in elt.*) {
 				s.addChild(visit(childElt));
@@ -167,21 +170,30 @@ package com.tobydietrich.svg
 			return s;
 		}
 		private function visitDefs(elt:XML):Sprite {
+			var s:Sprite = new Sprite();
+			s.name = "defs";
+			
 			notImplemented("defs");
-			return new Sprite();
+			return s;
 		}
 		
 		private function visitClipPath(elt:XML):Sprite {
+			var s:Sprite = new Sprite();
+			s.name = "clipPath";
+			
 			notImplemented("clipPath");
-			return new Sprite();;
+			return s;
 		}
 		
 		private function visitUse(elt:XML):Sprite {
+			var s:Sprite = new Sprite();
+			s.name = "use";
+			
 			notImplemented("use");
-			return new Sprite();
+			return s;
 		}
 		private static function getColor(s:String):uint {
-			return (s=="none")?null:new Number("0x" + s.substring(1));
+			return (s=="none") ? null : new Number("0x" + s.substring(1));
 		}
 		private static function notImplemented(s:String):void {
 			trace("renderer has not implemented " + s);

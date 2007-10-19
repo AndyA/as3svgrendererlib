@@ -1,12 +1,14 @@
 package com.tobydietrich.svg
 {
+	import flash.events.Event;
 	import flash.geom.Matrix;
 	import flash.geom.Point;
-	import mx.utils.StringUtil;
-	import mx.styles.StyleManager;
 	import flash.geom.Rectangle;
+	
+	import mx.utils.StringUtil;
+	
+	import org.apache.batik.parser.*;
 	import org.apache.batik.parser.PathParser;
-	import org.apache.batik.parser.AWTPathProducer;
 	
 	public class SVGParser
 	{
@@ -73,8 +75,8 @@ package com.tobydietrich.svg
 			// parse
 			var viewBox:Rectangle = parseViewBox(elt.@viewBox);
 			
-			// trace
-			var ast:XML = <svg videBoxWidth={viewBox.width} viewBoxHeight={viewBox.height} />;
+			// AST
+			var ast:XML = <svg viewBoxWidth={viewBox.width} viewBoxHeight={viewBox.height} />;
 			for each(var e:XML in elt.*) {
 				ast.appendChild(visit(e));
 			}
@@ -99,7 +101,7 @@ package com.tobydietrich.svg
 				ry = (rx != 0 && ry == 0)?rx:ry;
 			}
 			
-			// trace
+			// AST
 			return <rect width={w} height={h} x={px} y={py} isComplex={isComplex} 
 			 rx={rx} ry={ry} fill={fill} stroke={stroke} stroke-width={strokeWidth} />;
 		}
@@ -112,14 +114,20 @@ package com.tobydietrich.svg
 			
 			var path:XML = <path fill={fill} stroke={stroke} stroke-width={strokeWidth} />;
 			
-			/* var handler:AWTPathProducer = new AWTPathProducer();
+			//var h:ASPathHandler = new ASPathHandler();
+			var h:ASPathNormalizer = new ASPathNormalizer();
+			h.addEventListener(Event.COMPLETE, function eComplete(event:Event):void {
+				path.setChildren(event.target.listHandler.*);
+				path.@type = event.target.listHandler.@type;
+				//trace(path);
+			});
 			var pathParser:PathParser = new PathParser();
-			pathParser.setPathHandler(handler);
+			pathParser.setPathHandler(h);
 			pathParser.parse(elt.@d);
-			*/
-			notImplemented("path");
+			
+			
          	
-         	// trace
+         	// AST
          	return path;
 		}
 		private function visitPolywhatever(elt:XML, isPolygon:Boolean):XML {
@@ -161,7 +169,7 @@ package com.tobydietrich.svg
 
             }
 
-			// trace
+			// AST
 			var ast:XML;
 			if(isPolygon) {
 				ast = <polygon stroke={stroke} stroke-width={strokeWidth} fill={fill} />;
@@ -188,7 +196,7 @@ package com.tobydietrich.svg
 			var stroke:String = getColor(styles.@stroke);
 			var strokeWidth:int = int(styles["stroke-width"]);
 			
-			// trace
+			// AST
 			return <line x1={p1.x} y1={p1.y} x2={p2.x} y2={p2.y} stroke={stroke} stroke-width={strokeWidth} />;
 		}
 		private function visitCircle(elt:XML):XML {
@@ -199,7 +207,7 @@ package com.tobydietrich.svg
 			var fill:String = getColor(styles.@fill);
 			var stroke:String = getColor(styles.@stroke);
 			var strokeWidth:int = int(styles["stroke-width"]);
-			// trace
+			// AST
 			return <circle cx={c.x} cy={c.y} r={r} fill={fill} stroke={stroke} stroke-width={strokeWidth} />;
 		}
 		private function visitEllipse(elt:XML):XML {
@@ -211,14 +219,14 @@ package com.tobydietrich.svg
 			var fill:String = getColor(styles.@fill);
 			var stroke:String = getColor(styles.@stroke);
 			var strokeWidth:int = int(styles["stroke-width"]);
-			// trace
+			// AST
 			return <ellipse cx={c.x} cy={c.y} rx={rx} ry={ry} fill={fill} stroke={stroke} stroke-width={strokeWidth} />;
 		}
 		private function visitG(elt:XML):XML {
 			// parse
 			var m:Matrix = parseMatrix(elt.@transform);
 			
-			// trace
+			// AST
 			var ast:XML = <g a={m.a} b={m.b} c={m.c} d={m.d} tx={m.tx} ty={m.ty} />;
 			for each(var e:XML in elt.*) {
 				ast.appendChild(visit(e));
@@ -227,23 +235,35 @@ package com.tobydietrich.svg
 		}
 		private function visitDefs(elt:XML):XML {
 			//parse
+			var retVal:XML = elt;
+			for each(var e:XML in elt.*) {
+				retVal.appendChild(visit(e));
+			}
 			notImplemented("defs");
-			//trace
-			return elt;
+			// AST
+			return retVal;
 		}
 		
 		private function visitClipPath(elt:XML):XML {
-			// parse
+			//parse
+			var retVal:XML = elt;
+			for each(var e:XML in elt.*) {
+				retVal.appendChild(visit(e));
+			}
 			notImplemented("clipPath");
-			// trace
-			return elt;
+			// AST
+			return retVal;
 		}
 		
 		private function visitUse(elt:XML):XML {
-			// parse
+			//parse
+			var retVal:XML = elt;
+			for each(var e:XML in elt.*) {
+				retVal.appendChild(visit(e));
+			}
 			notImplemented("use");
-			// trace
-			return elt;
+			// AST
+			return retVal;
 		}
 		
 		

@@ -1,9 +1,8 @@
-package com.tobydietrich.svg
+package com.tobydietrich.svg.test
 {
 	import com.tobydietrich.soundeditor.model.XMLLoaderModel;
 	import flash.events.Event;
 	import flash.events.EventDispatcher;
-	import com.tobydietrich.soundeditor.model.LoaderModel;
 	
 	public class SVGTestFiles extends EventDispatcher
 	{
