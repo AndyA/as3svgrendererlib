@@ -87,7 +87,7 @@ package com.tobydietrich.svg
 			// parse
 			var w:Number = getNumber(elt.@width);
 			var h:Number = getNumber(elt.@height);
-			var styles:XML = getStyle(elt);
+			var styles:XML = SvgStyleModel.CSStoXML(elt);
 			var fill:String = getColor(styles.@fill);
 			var stroke:String = getColor(styles.@stroke);
 			var strokeWidth:int = int(styles["stroke-width"]);
@@ -107,7 +107,7 @@ package com.tobydietrich.svg
 		}
 		private function visitPath(elt:XML):XML {
 			// parse
-			var styles:XML = getStyle(elt);
+			var styles:XML = SvgStyleModel.CSStoXML(elt);
 			var fill:String = getColor(styles.@fill);
 			var stroke:String = getColor(styles.@stroke);
 			var strokeWidth:int = int(styles["stroke-width"]);
@@ -132,7 +132,7 @@ package com.tobydietrich.svg
 		}
 		private function visitPolywhatever(elt:XML, isPolygon:Boolean):XML {
 			// parse
-			var styles:XML = getStyle(elt);
+			var styles:XML = SvgStyleModel.CSStoXML(elt);
 			var fill:String = getColor(styles.@fill);
 			var stroke:String = getColor(styles.@stroke);
 			var strokeWidth:int = int(styles["stroke-width"]);
@@ -192,7 +192,7 @@ package com.tobydietrich.svg
 			// parse
 			var p1:Point = new Point(getNumber(elt.@x1, true), getNumber(elt.@y1, true));
 			var p2:Point = new Point(getNumber(elt.@x2, true), getNumber(elt.@y2, true));
-			var styles:XML = getStyle(elt);
+			var styles:XML = SvgStyleModel.CSStoXML(elt);
 			var stroke:String = getColor(styles.@stroke);
 			var strokeWidth:int = int(styles["stroke-width"]);
 			
@@ -203,7 +203,7 @@ package com.tobydietrich.svg
 			// parse
 			var c:Point = new Point(getNumber(elt.@cx), getNumber(elt.@cy));
 			var r:Number = getNumber(elt.@r, true);
-			var styles:XML = getStyle(elt);
+			var styles:XML = SvgStyleModel.CSStoXML(elt);
 			var fill:String = getColor(styles.@fill);
 			var stroke:String = getColor(styles.@stroke);
 			var strokeWidth:int = int(styles["stroke-width"]);
@@ -215,7 +215,7 @@ package com.tobydietrich.svg
 			var c:Point = new Point(getNumber(elt.@cx), getNumber(elt.@cy));
 			var rx:Number = getNumber(elt.@rx, true);
 			var ry:Number = getNumber(elt.@ry, true);
-			var styles:XML = getStyle(elt);
+			var styles:XML = SvgStyleModel.CSStoXML(elt);
 			var fill:String = getColor(styles.@fill);
 			var stroke:String = getColor(styles.@stroke);
 			var strokeWidth:int = int(styles["stroke-width"]);
@@ -307,24 +307,7 @@ package com.tobydietrich.svg
 			}
 			return env + style;
 		}
-		private static function getStyle(elt:XML):XML {
-			var env:String = elt.@styleenv;
-			var envElts:Array = env.split(/;\s*/);
-			var retVal:XML = <styles />;
-			var keyValueSplitter:Function =  function(element:*, index:int, arr:Array):void {
-				var elt:String = element as String;
-				if(elt.length == 0) {
-					return;
-				}
-				var splitElt:Array = elt.split(/:/);
-				if(splitElt.length != 2) {
-					throw new SVGParseError("can't parse stylesheet");
-				}
-				this.@[splitElt[0]] = splitElt[1];
-			};
-			envElts.forEach(keyValueSplitter, retVal);
-			return retVal;
-		}
+		
 		private static function getColor(c:String):String {
 			return c;
 		}

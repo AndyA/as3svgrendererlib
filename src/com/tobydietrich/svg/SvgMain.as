@@ -10,16 +10,17 @@ package com.tobydietrich.svg {
 	import mx.core.UIComponent;
 
 	
-	public class SvgMain extends UIComponent
+	public class SvgMain extends Sprite
 	{
-			private var baseURL:String = "http://localhost/audeto/data/shapes/";
+			
 			private var svgFiles:SVGTestFiles;
 			private var ROW_SIZE:int = 5;
 			private var ELT_WIDTH:int = 1024;
 			private var ELT_HEIGHT:int = 768;
 			private var SCALE:Number = 1/5;
+			private var foo:String ="http://localhost/audeto/data/shapes/";
 			
-		public function SvgMain()
+		public function SvgMain(baseURL:String)
 		{
 			svgFiles = new SVGTestFiles(baseURL, "shapes.xml");
 			svgFiles.addEventListener(Event.COMPLETE, svgLoaded);
@@ -75,16 +76,8 @@ package com.tobydietrich.svg {
 				mySVG.graphics.lineStyle(5, 0x00FF00);
 				mySVG.graphics.drawRect(0, 0, viewBox.width, viewBox.height);
 				
-				// scale up to full viewbox
-				activeArea.width = viewBox.width;
-			    activeArea.height = viewBox.height;
-			    // scale down the larger scale factor
-			    if(activeArea.scaleX < activeArea.scaleY) {
-			    	activeArea.scaleY = activeArea.scaleX;
-			    } else {
-			    	activeArea.scaleX = activeArea.scaleY;
-			    }
-			    //activeArea.scaleX = activeArea.scaleY = 1;
+				ViewWindowMinimizer.scaleUp(mySVG);
+				
 			    
 			    // find the minimum point in the active area.
 			    var min:Point = new Point(viewBox.width,viewBox.height);

@@ -1,7 +1,5 @@
 package org.apache.batik.parser
 {
-	
-import ascb.drawing.Pen;
 
 import flash.events.*;
 
