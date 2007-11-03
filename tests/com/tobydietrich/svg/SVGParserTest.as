@@ -1,7 +1,6 @@
-package com.tobydietrich.svg.test
+package com.tobydietrich.svg
 {
 	import flexunit.framework.TestCase;
-	import com.tobydietrich.svg.*;
 
 	public class SVGParserTest extends TestCase
 	{

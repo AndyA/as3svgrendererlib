@@ -55,6 +55,9 @@ package com.tobydietrich.svg
 				case 'use':
 				return visitUse(elt);
 				
+				case 'notSupported':
+				return new Sprite();
+				
 				default:
 				throw new SVGRenderError("Unknown tag type " + elt.localName());
 			}
@@ -83,8 +86,7 @@ package com.tobydietrich.svg
 			s.name = "rectangle";
 			s.x = elt.@x;
 			s.y = elt.@y;
-			var fill:uint = getColor(elt.@fill);
-			s.graphics.beginFill(getColor(elt.@fill));
+			beginFill(s, elt);
 			s.graphics.lineStyle(elt.@strokeWidth, getColor(elt.@stroke));
 			if(elt.@isComplex) {
 				s.graphics.drawRoundRectComplex(0, 0, 
@@ -98,9 +100,10 @@ package com.tobydietrich.svg
 		private function visitPath(elt:XML):Sprite {
          	var s:Sprite = new Sprite();
          	s.name = "path";
-         	s.graphics.beginFill(getColor(elt.@fill));
+			beginFill(s, elt);
          	s.graphics.lineStyle(elt.@strokeWidth, getColor(elt.@stroke));
          	var p:PathRenderer = new PathRenderer(s,elt);
+         	s.graphics.lineStyle();
          	s.graphics.endFill();
 			return s;
 		}
@@ -110,17 +113,21 @@ package com.tobydietrich.svg
            
             s.x = elt.startPoint.@x;
             s.y = elt.startPoint.@y;
+            
             s.graphics.lineStyle(elt.@strokeWidth, getColor(elt.@stroke));
             if(isPolygon) {
-            	s.graphics.beginFill(getColor(elt.@fill));
+				beginFill(s, elt);
             }
+            var index:int = 0;
             for each(var e:XML in elt.intermediatePoint) {
             	s.graphics.lineTo(e.x, e.y);
+            	index++;
             }
             if(isPolygon) {
             	s.graphics.lineTo(0, 0);
             	s.graphics.endFill();
             }
+            s.graphics.lineStyle();
 			return s;
 		}
 		private function visitPolygon(elt:XML):Sprite {
@@ -136,6 +143,7 @@ package com.tobydietrich.svg
 			s.y = elt.@y1;
 			s.graphics.lineStyle(elt.@strokeWidth, getColor(elt.@stroke));
 			s.graphics.lineTo(elt.@x2, elt.@y2);
+			s.graphics.lineStyle();
 			return s;
 		}
 		private function visitCircle(elt:XML):Sprite {
@@ -144,9 +152,10 @@ package com.tobydietrich.svg
 			s.x = elt.@cx;
 			s.y = elt.@cy;
 			s.graphics.lineStyle(elt.@strokeWidth, getColor(elt.@stroke));
-			s.graphics.beginFill(getColor(elt.@fill));
+			beginFill(s, elt);
 			s.graphics.drawCircle(-elt.@r/2, -elt.@r/2, elt.@r);
 			s.graphics.endFill();
+			s.graphics.lineStyle();
 			return s;
 		}
 		private function visitEllipse(elt:XML):Sprite {
@@ -155,9 +164,10 @@ package com.tobydietrich.svg
 			s.x = elt.@cx;
 			s.y = elt.@cy;
 			s.graphics.lineStyle(elt.@strokeWidth, getColor(elt.@stroke));
-			s.graphics.beginFill(getColor(elt.@fill));
+			beginFill(s, elt);
 			s.graphics.drawEllipse(-elt.@rx/2, -elt.@ry/2, elt.@rx, elt.@ry);
 			s.graphics.endFill();
+			s.graphics.lineStyle();
 			return s;
 		}
 		private function visitG(elt:XML):Sprite {
@@ -192,8 +202,14 @@ package com.tobydietrich.svg
 			notImplemented("use");
 			return s;
 		}
+		private static function beginFill(s:Sprite, elt:XML):void {
+			var color:uint = getColor(elt.@fill);
+			var noFill:Boolean = elt.@fill == null || elt.@fill == '' || elt.@fill=='none';
+			s.graphics.beginFill(color, noFill?0:1);
+		}
 		private static function getColor(s:String):uint {
-			return (s=="none") ? null : new Number("0x" + s.substring(1));
+			// FIXME
+			return new Number("0x" + s.substring(1));
 		}
 		private static function notImplemented(s:String):void {
 			trace("renderer has not implemented " + s);

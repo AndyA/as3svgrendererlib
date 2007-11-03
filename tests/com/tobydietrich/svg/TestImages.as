@@ -1,4 +1,4 @@
-package com.tobydietrich.svg.test
+package com.tobydietrich.svg
 {
 	public class TestImages
 	{

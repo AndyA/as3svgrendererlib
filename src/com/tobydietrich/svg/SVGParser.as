@@ -8,7 +8,6 @@ package com.tobydietrich.svg
 	import mx.utils.StringUtil;
 	
 	import org.apache.batik.parser.*;
-	import org.apache.batik.parser.PathParser;
 	
 	public class SVGParser
 	{
@@ -68,7 +67,7 @@ package com.tobydietrich.svg
 				
 				default:
 				notSupported("tag '" + elt.localName() + "'");
-				return null;
+				return <notSupported />;
 			}
 		}
 		private function visitSvg(elt:XML):XML {
@@ -140,7 +139,13 @@ package com.tobydietrich.svg
 			var MoveToRe:RegExp = /\s*(-?\d+(\.\d+)?)\s*,\s*(-?\d+(\.\d+)?)/;
             var PointsRe:RegExp = /[,\s]\s*(-?\d+(\.\d+)?)\s*,\s*(-?\d+(\.\d+)?)/;
             
-			var points:String = elt.@points;
+            var verts:String = elt.@verts;
+            var points:String = elt.@points;
+            
+            if(points == null || points == '') {
+            	points = verts;
+            }
+			
 			var arrPoint:Object = {};
 			
 			if(points == null) {
@@ -148,7 +153,7 @@ package com.tobydietrich.svg
 			}
 			
 			if(!MoveToRe.test(points)) {
-				throw new SVGParseError("must have a first point " + elt.@points);
+				throw new SVGParseError("must have a first point " + elt.toXMLString());
 			}
             var result:Object = MoveToRe.exec(points);
             var startPoint:Point = new Point(new Number(result[1]), new Number(result[3]));
@@ -316,13 +321,16 @@ package com.tobydietrich.svg
 		}
 		private static function notImplemented(s:String):void {
 			trace("parser has not implemented: " + s);
-			//throw SVGNotImplementedException(s);
+			//throw new SVGNotImplementedException(s);
 		}
 		private static function notSupported(s:String):void {
 			trace("not supported: " + s);
-			throw SVGNotSupportedException(s);
+			//throw new SVGNotSupportedException(s);
 		}
 		private static function parseViewBox(viewBox:String):Rectangle {
+			if(viewBox == null || viewBox == "") {
+				return new Rectangle(0,0,500,500);
+			}
 			var params:Object = viewBox.split(/\s/);
 			return new Rectangle(params[0], params[1], params[2], params[3]);
 		}

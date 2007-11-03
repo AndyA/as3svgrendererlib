@@ -176,16 +176,9 @@ import org.w3c.dom.svg.SVGPathSeg;
                 	type={SVGPathSeg.PATHSEG_CURVETO_QUADRATIC_ABS} 
                 	letter={SVGPathSegConstants.PATHSEG_CURVETO_QUADRATIC_ABS_LETTER} 
                 	x1={x1} y1={y1} x={x} y={y} />);
-                /* this is for systems that only have cubic bezier splines
-                        curvetoCubicAbs(new Number(lastAbs.@x) + 2 * (x1 - new Number(lastAbs.@x)) / 3,
-                                                        new Number(lastAbs.@y) + 2 * (y1 - new Number(lastAbs.@y)) / 3,
-                                                        x + 2 * (x1 - x) / 3,
-                                                        y + 2 * (y1 - y) / 3,
-                                                        x, y);
-                 */
-                        lastAbs.@x1 = x1;
-                        lastAbs.@y1 = y1;
-                        lastAbs.@PathSegType = SVGPathSeg.PATHSEG_CURVETO_QUADRATIC_ABS;
+                lastAbs.@x1 = x1;
+                lastAbs.@y1 = y1;
+                lastAbs.@PathSegType = SVGPathSeg.PATHSEG_CURVETO_QUADRATIC_ABS;
         }
 
         /**

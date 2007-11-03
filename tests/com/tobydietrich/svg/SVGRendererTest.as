@@ -1,4 +1,4 @@
-package com.tobydietrich.svg.test
+package com.tobydietrich.svg
 {
 	import flexunit.framework.TestCase;
 
@@ -8,10 +8,6 @@ package com.tobydietrich.svg.test
 		{
 			super(methodName);
 		}
-		
-		//public function testBar():void {
-		//	assertFalse("ono", false);
-		//}
 		
 	}
 }

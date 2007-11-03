@@ -26,14 +26,15 @@ package com.tobydietrich.svg
 		private var first:Point = new Point();
 		
 		public function PathRenderer(s:Sprite, path:XML) {
+			//trace(path.parent().parent().toXMLString());
 			myPenSprite = s;
-			var isFirst:Boolean = true;
+			var i:int = 0;
 			for each(var e:XML in path.*) {
-				if(isFirst) {
+				if(i == 0) {
 					first.x = e.@x;
 					first.y = e.@y;
-					isFirst = false;
 				}
+				i++;
 				var name:String = e.name();
 				switch(name) {
 					case "SVGPathSegMovetoLinetoItem":
@@ -102,6 +103,7 @@ package com.tobydietrich.svg
 		private function updatePen(x:Number, y:Number):void {
 			myPenX = x;
 			myPenY = y;
+			//trace(new XML(<myPen x={x} y={y} />).toXMLString());
 		}
 	}
 }

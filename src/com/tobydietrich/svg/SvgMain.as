@@ -1,13 +1,10 @@
 package com.tobydietrich.svg {
-	import com.tobydietrich.soundeditor.utils.DisplayObjectTraceXML;
-	import com.tobydietrich.svg.test.*;
+	
+	import com.tobydietrich.utils.*;
 	
 	import flash.display.*;
-	import flash.events.Event;
-	import flash.geom.Point;
-	import flash.geom.Rectangle;
-	
-	import mx.core.UIComponent;
+	import flash.events.*;
+	import flash.geom.*;
 
 	
 	public class SvgMain extends Sprite
@@ -25,6 +22,35 @@ package com.tobydietrich.svg {
 			svgFiles = new SVGTestFiles(baseURL, "shapes.xml");
 			svgFiles.addEventListener(Event.COMPLETE, svgLoaded);
 		}
+		
+		private function renderAndRecord(svg:XML, printer:XML, name:String="", type:String=""):SVGRenderer {
+			var query:XML = <shape name={name} type={type} />;
+			printer.appendChild(query);
+			
+			// create some nodes
+			var initialSVG:XML = <initialSVG />;
+			query.appendChild(initialSVG);
+			
+			var parseOutput:XML = <parseOutput />;
+			query.appendChild(parseOutput);
+			
+			var renderOutput:XML = <renderOutput />;
+			query.appendChild(renderOutput);
+			
+			var transformInfo:XML = <transformInfo />;
+			query.appendChild(transformInfo);
+			
+			// process SVG.
+			initialSVG.appendChild(svg);
+			var myAST:SVGParser = new SVGParser(svg);
+			parseOutput.appendChild(myAST.xml);
+			var mySVG:SVGRenderer = new SVGRenderer(myAST.xml);
+			
+			mySVG.name = "mySVG_" + name + "_" + type;
+			renderOutput.appendChild(DisplayObjectTraceXML.traceXML(mySVG));
+			return mySVG;
+		}
+		
 		private function svgLoaded(event:Event):void {
 			var collection:SVGTestFiles = event.target as SVGTestFiles;
 			//trace(collection.xml);
@@ -35,30 +61,9 @@ package com.tobydietrich.svg {
 			// determine height and width
 			for each(var elt:XML in collection.shapes.shape) {
 				var query:XML = <shape name={elt.@name} type={elt.@type} />;
-				printer.appendChild(query);
-				
-				// create some nodes
-				var initialSVG:XML = <initialSVG />;
-				query.appendChild(initialSVG);
-				
-				var parseOutput:XML = <parseOutput />;
-				query.appendChild(parseOutput);
-				
-				var renderOutput:XML = <renderOutput />;
-				query.appendChild(renderOutput);
-				
-				var transformInfo:XML = <transformInfo />;
-				query.appendChild(transformInfo);
-				
-				// process SVG.
 				var svg:XML = collection.getSVG(query);
-				initialSVG.appendChild(svg);
-				var myAST:SVGParser = new SVGParser(svg);
-				parseOutput.appendChild(myAST.xml);
-				var mySVG:SVGRenderer = new SVGRenderer(myAST.xml);
+				var mySVG:SVGRenderer = renderAndRecord(svg, printer, elt.@name, elt.@type);
 				grid.addChild(mySVG);
-				mySVG.name = "mySVG_" + elt.@name + "_" + elt.@type;
-				renderOutput.appendChild(DisplayObjectTraceXML.traceXML(mySVG));
 				
 				// obtain some sprites from the SVG output
 				var viewBox:Sprite = mySVG.getChildAt(0) as Sprite;
@@ -69,14 +74,14 @@ package com.tobydietrich.svg {
 				mySVG.y = ELT_HEIGHT * Math.floor(i/ROW_SIZE);
 				
 				// set the viewbox to occupy a spot in the grid
-				viewBox.width = ELT_WIDTH -40;
-				viewBox.height = ELT_HEIGHT - 40;
+				mySVG.width = ELT_WIDTH -40;
+				mySVG.height = ELT_HEIGHT - 40;
 				
 				// draw the boundary around the viewBox
 				mySVG.graphics.lineStyle(5, 0x00FF00);
 				mySVG.graphics.drawRect(0, 0, viewBox.width, viewBox.height);
 				
-				ViewWindowMinimizer.scaleUp(mySVG);
+				//ViewWindowMinimizer.scaleUp(mySVG);
 				
 			    
 			    // find the minimum point in the active area.
