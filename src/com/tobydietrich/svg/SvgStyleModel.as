@@ -20,7 +20,7 @@ package com.tobydietrich.svg
 				}
 				var splitElt:Array = elt.split(/:/);
 				if(splitElt.length != 2) {
-					throw new SVGParseError("can't parse stylesheet");
+					throw new SVGParseError("can't parse stylesheet " + elt);
 				}
 				this.@[splitElt[0]] = splitElt[1];
 			};

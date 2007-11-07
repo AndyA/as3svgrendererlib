@@ -10,12 +10,12 @@ package com.tobydietrich.svg {
 	public class SvgMain extends Sprite
 	{
 			
-			private var svgFiles:SVGTestFiles;
-			private var ROW_SIZE:int = 5;
-			private var ELT_WIDTH:int = 1024;
-			private var ELT_HEIGHT:int = 768;
-			private var SCALE:Number = 1/5;
-			private var foo:String ="http://localhost/audeto/data/shapes/";
+		private var svgFiles:SVGTestFiles;
+		private var ROW_SIZE:int = 5;
+		private var ELT_WIDTH:int = 1024;
+		private var ELT_HEIGHT:int = 768;
+		private var SCALE:Number = 1/5;
+		private var foo:String ="http://localhost/audeto/data/shapes/";
 			
 		public function SvgMain(baseURL:String)
 		{
@@ -63,63 +63,24 @@ package com.tobydietrich.svg {
 				var query:XML = <shape name={elt.@name} type={elt.@type} />;
 				var svg:XML = collection.getSVG(query);
 				var mySVG:SVGRenderer = renderAndRecord(svg, printer, elt.@name, elt.@type);
-				grid.addChild(mySVG);
-				
-				// obtain some sprites from the SVG output
-				var viewBox:Sprite = mySVG.getChildAt(0) as Sprite;
-				var activeArea:Sprite = viewBox.getChildAt(0) as Sprite;
-				
+				var myContainer:Sprite = new Sprite();
+				grid.addChild(myContainer);
 				// put in the grid
-				mySVG.x = ELT_WIDTH * (i%ROW_SIZE);
-				mySVG.y = ELT_HEIGHT * Math.floor(i/ROW_SIZE);
+				myContainer.x = ELT_WIDTH * (i%ROW_SIZE);
+				myContainer.y = ELT_HEIGHT * Math.floor(i/ROW_SIZE);
 				
+				// draw the boundary around the container
+				myContainer.graphics.lineStyle(5, 0x00FF00);
+				myContainer.graphics.drawRect(0, 0, ELT_WIDTH - 40, ELT_WIDTH - 40);
+				
+				
+				ViewWindowMinimizer.minimizeViewWindow(mySVG);
 				// set the viewbox to occupy a spot in the grid
-				mySVG.width = ELT_WIDTH -40;
-				mySVG.height = ELT_HEIGHT - 40;
+				ViewWindowMinimizer.fitInContainer(myContainer, mySVG);
+		    
+				myContainer.addChild(mySVG);
 				
-				// draw the boundary around the viewBox
-				mySVG.graphics.lineStyle(5, 0x00FF00);
-				mySVG.graphics.drawRect(0, 0, viewBox.width, viewBox.height);
 				
-				//ViewWindowMinimizer.scaleUp(mySVG);
-				
-			    
-			    // find the minimum point in the active area.
-			    var min:Point = new Point(viewBox.width,viewBox.height);
-			    var r:Rectangle;
-			    for (var j:int= 0; j < activeArea.numChildren; j++) {
-						var c:DisplayObject = activeArea.getChildAt(j);
-						r = c.getBounds(activeArea);
-						min.x = Math.min(min.x, r.x);
-						min.y = Math.min(min.y, r.y);
-					}
-			    
-			    // reset the x, y coordinates to the negative of the scaling factor times the minimum point.
-			    activeArea.x = -activeArea.scaleX * min.x;
-			    activeArea.y = -activeArea.scaleY * min.y;
-				//activeArea.x = activeArea.y = 0;
-				
-			
-				
-				// DEBUG: get the bounds of the content area
-				/*
-					r = activeArea.getBounds(viewBox);	
-				transformInfo.appendChild(<rectangle x={r.x} y={r.y} width={r.width} height={r.height} />);
-				
-				if(r.width > 0 && r.width < 10000 && r.height > 0 && r.height < 10000) {	
-					// DEBUG draw a bounding box
-					var boundingBox:Sprite = new Sprite();
-					//viewBox.addChild(boundingBox); // get the bounding box.
-					boundingBox.name = "boundingBox";
-					boundingBox.graphics.lineStyle(5, 0x00FFFF);
-					boundingBox.graphics.drawRect(r.x, r.y, r.width, r.height);
-					
-					// numeric overflow in getBounds....
-					if(r.width <= 0 || r.width > 10000 || r.height <= 0 || r.height > 10000) {
-						throw new Error("insane numbers");
-					}
-				}
-				*/
 				
 				i++;
 			}

@@ -72,10 +72,31 @@ package com.tobydietrich.svg
 			activeArea.name = "activeArea";
 			viewBox.addChild(activeArea);
 		
-			
 			// iterate through the children of the svg node
 			for each(var childElt:XML in elt.*) {
 				activeArea.addChild(visit(childElt));
+			}
+			
+			// find the minimum point in the active area.
+		    var min:Point = new Point(Number.POSITIVE_INFINITY, Number.POSITIVE_INFINITY);
+		    var r:Rectangle;
+		    
+		    var i:int = 0;
+		    var c:DisplayObject;
+			for (i = 0; i < activeArea.numChildren; i++) {
+				c = activeArea.getChildAt(i);
+				r = c.getBounds(activeArea);
+				min.x = Math.min(min.x, r.x);
+				min.y = Math.min(min.y, r.y);
+			}
+			
+			// move the transform into the activeArea layer
+			activeArea.x = min.x;
+			activeArea.y = min.y;
+			for (i = 0; i < activeArea.numChildren; i++) {
+				c = activeArea.getChildAt(i);
+				c.x -= min.x;
+				c.y -= min.y;
 			}
 			
 			return viewBox;
