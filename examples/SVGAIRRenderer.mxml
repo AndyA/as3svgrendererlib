@@ -14,6 +14,14 @@
 			import mx.effects.effectClasses.BlurInstance;
 			import flash.filesystem.*;
 			import com.adobe.images.*;
+			
+			import flash.desktop.ClipboardFormats;
+			import flash.desktop.DragManager;
+			import flash.events.NativeDragEvent;
+			import flash.filesystem.File;
+			import flash.filesystem.FileMode;
+			import flash.filesystem.FileStream;
+			
 
 			// File object for saving / loading
 			private var file:File;
@@ -26,6 +34,42 @@
 			
 			public function onCreationComplete():void {
 				img.addChild(uiComponent);
+				
+				//register for the drag enter event
+				addEventListener(NativeDragEvent.NATIVE_DRAG_ENTER, onDragIn);
+			
+				//register for the drag drop event
+				addEventListener(NativeDragEvent.NATIVE_DRAG_DROP, onDragDrop);
+			}
+			
+			//called when the user drags an item into the component area
+			private function onDragIn(e:NativeDragEvent):void
+			{
+				//check and see if files are being drug in
+				if(e.clipboard.hasFormat(ClipboardFormats.FILE_LIST_FORMAT))
+				{
+					//get the array of files
+					var files:Array = e.clipboard.getData(ClipboardFormats.FILE_LIST_FORMAT) as Array;
+			
+					//make sure only one file is dragged in (i.e. this app doesn't
+					//support dragging in multiple files)
+					if(files.length == 1)
+					{
+						//accept the drag action
+						DragManager.acceptDragDrop(this);
+					}
+				}
+			}
+			
+			//called when the user drops an item over the component
+			private function onDragDrop(e:NativeDragEvent):void
+			{
+				//get the array of files being drug into the app
+				var arr:Array = e.clipboard.getData(ClipboardFormats.FILE_LIST_FORMAT) as Array;
+			
+				file = File(arr[0]);
+				
+				renderSvg(file);
 			}
 			
 			public function saveImg():void {
@@ -36,7 +80,7 @@
 				file.addEventListener(Event.SELECT, onFileSave);
 				
 				// request a download a bogus file, to get the Browse dialog to pop up
-				file.download(new URLRequest("http://foo/foo"), "snapshot.jpg");
+				file.download(new URLRequest("http://foo/foo"), "snapshot.png");
 			}
 				
 			public function onFileSave(e:Event):void {
@@ -50,16 +94,15 @@
 				bmpData.draw(mySVG);
 				
 				
-				// encode the pixel data into a JPEG
-				var jpgEncoder:JPGEncoder = new JPGEncoder();
-				var jpgBytes:ByteArray = jpgEncoder.encode(bmpData);
+				// encode the pixel data into a PNG
+				var pngBytes:ByteArray = PNGEncoder.encode(bmpData);
 
 				// open a filestream from the file
 				var stream:FileStream = new FileStream();
 				stream.open(file, FileMode.WRITE);
 				
-				// write the jpeg data to the file
-				stream.writeBytes(jpgBytes, 0, jpgBytes.length);
+				// write the png data to the file
+				stream.writeBytes(pngBytes, 0, pngBytes.length);
 				
 				// close the stream. the file is now saved.
 				stream.close();				
@@ -85,6 +128,9 @@
 				// in a flash movie, you would not have access to the full path,
 				// but in apollo you do.
 				//trace(file.url);
+				renderSvg(file);
+			}
+			private function renderSvg(file:File):void {
 				
 				// load the image that they picked.
 				// In Apollo, you can load from file://... URLs
@@ -106,7 +152,7 @@
 	<mx:VBox left="5" top="5" bottom="5" right="5" horizontalAlign="center">
 		<mx:HBox width="100%"  horizontalAlign="center">
 			<mx:Button label="Load..." click="loadImg()"  />
-			<mx:Button label="Save as JPG..." click="saveImg()"  />			
+			<mx:Button label="Save as PNG..." click="saveImg()"  />			
 		</mx:HBox>
 		<mx:HBox width="100%" horizontalAlign="left">
 			<mx:Container id="img" />
